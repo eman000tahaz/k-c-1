@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates id="template" xml:space="preserve">
+    <t t-name="OrderTypeSelection">
+        <select class="control-button js_order_type" name="order_type">
+            <option value="dining">Dining</option>
+            <option value="takeaway">Take Away</option>
+            <option value="delivery">Delivery</option>
+        </select>
+    </t>
+
+    <t t-name="Orderline">
+        <li t-attf-class="orderline #{ line.selected ? 'selected' : '' } #{line.get_void() ? 'void-order' : ''}">
+            <span class="product-name">
+                <t t-esc="line.get_product().display_name"/>
+                <t t-if="line.get_product().tracking!=='none'">
+                    <i t-attf-class="oe_link_icon fa fa-list oe_icon line-lot-icon #{line.has_valid_product_lot() ? 'oe_green' : 'oe_red' }"/>
+                </t>
+            </span>
+            <span class="price">
+                <t t-esc="widget.format_currency(line.get_display_price())"/>
+            </span>
+            <ul class="info-list">
+                <t t-if="line.get_quantity_str() !== '1' || line.selected ">
+                    <li class="info">
+                        <em>
+                            <t t-esc="line.get_quantity_str()" />
+                        </em>
+                        <t t-esc="line.get_unit().name" />
+                        at
+                        <t t-esc="widget.format_currency(line.get_unit_display_price(),'Product Price')" />
+                        /
+                        <t t-esc="line.get_unit().name" />
+                    </li>
+                </t>
+                <t t-if="line.get_discount_str() !== '0'">
+                    <li class="info">
+                        With a 
+                        <em>
+                            <t t-esc="line.get_discount_str()" />%
+                        </em>
+                        discount
+                    </li>
+                </t>
+                <!-- <t t-set="extra_items" t-value="line.get_extra_items()" />
+                <ul t-if="extra_items">
+                    <li class="info orderline-item" t-foreach="extra_items" t-as="item">
+                        <i class='fa fa-plus'/>
+                        <t t-esc="item.display_name"/>
+                    </li>
+                </ul> -->
+            </ul>
+        </li>
+    </t>
+
+    <t t-extend="OrderSelectorWidget">
+        <t t-jquery=".order-selector" t-operation="prepend">
+            <select class="select-order-option">
+                <t t-foreach="widget.pos.get_order_list()" t-as="order">
+                    <t t-if='order === widget.pos.get_order()'>
+                        <option selected="selected" class="selected" t-att-data-uid="order.uid">
+                            <span class='order-sequence'>
+                                <t t-esc='order.sequence_number' />
+                            </span>
+                            <t t-esc="moment(order.creation_date).format('hh:mm')"/>
+                        </option>
+                    </t>
+                    <t t-if='order !== widget.pos.get_order()'>
+                        <option t-att-data-uid="order.uid">
+                            <span class='order-sequence'>
+                                <t t-esc='order.sequence_number' />
+                            </span>
+                            <t t-esc="moment(order.creation_date).format('hh:mm')"/>
+                        </option>
+                    </t>
+                </t>
+            </select>
+        </t>
+    </t>
+    <t t-name="ButtonVoidOrder">
+        <span class="control-button order-submit">
+            <i class="fa fa-times"></i>
+            Void Line
+        </span>
+    </t>
+    <t t-name="VoidConfirmPopupWidget">
+        <div class="modal-dialog">
+            <div class="popup popup-confirm">
+                <p class="title"><t t-esc=" widget.options.title || 'Confirm ?' " /></p>
+                <p class="body"><t t-esc="  widget.options.body || '' "/></p>
+                <div class="footer">
+                    <div class="button void-confirm">
+                        Void Order
+                    </div>
+                    <div class="button confirm">
+                        Confirm
+                    </div>
+                    <div class="button cancel">
+                        Cancel
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+
+    <t t-extend="PosTicket">
+        <t t-jquery=".receipt-orderlines tr" t-operation="replace">
+            <t t-foreach="orderlines" t-as="orderline">
+            <tr t-if="!orderline.is_void">
+                <td>
+                    <t t-esc="orderline.get_product().display_name"/>
+                    <t t-if="orderline.get_discount() > 0">
+                        <div class="pos-disc-font">
+                            With a <t t-esc="orderline.get_discount()"/>% discount
+                        </div>
+                    </t>
+                    <t t-set="extra_items" t-value="orderline.get_extra_items()" />
+                    <t t-log="extra_items" />
+                    <t t-if="extra_items">
+                        <t t-foreach="extra_items" t-as="extra">
+                            <div style="margin-left: 5%;">
+                                <span class="fa fa-plus" />
+                                <t t-esc="extra.display_name" />
+                                <span t-esc="widget.format_currency(extra.price)" />
+                            </div>
+                        </t>
+                    </t>
+                </td>
+                <td class="pos-right-align">
+                    <t t-esc="orderline.get_quantity_str_with_unit()"/>
+                </td>
+                <td class="pos-right-align">
+                    <t t-esc="widget.format_currency(orderline.get_display_price())"/>
+                </td>
+            </tr>
+            </t>
+        </t>
+    </t>
+</templates>
